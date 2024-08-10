@@ -15,25 +15,24 @@ const basket = {
   friction: 0.9,
 };
 
-const fruit = {
-  x: Math.random() * (canvas.width - 30),
-  y: 0,
-  size: 30,
-  speed: 3,
-};
+const fruitTypes = [
+  { type: "apple", color: "#ff6347", size: 30, score: 1 },
+  { type: "banana", color: "#ffe135", size: 40, score: 2 },
+  { type: "grape", color: "#6a0dad", size: 20, score: 3 },
+];
+
+let fruit = getRandomFruit();
 
 let score = 0;
 let lives = 5;
 let isMovingLeft = false;
 let isMovingRight = false;
-let gameRunning = false; // To track if the game is running or paused
-let gameOver = false; // To track if the game is over
+let gameRunning = false;
+let gameOver = false;
 
 let playerId = "";
 let playerName = "";
 
-const scoreElement = document.getElementById("score");
-const livesElement = document.getElementById("lives");
 const playerTableBody = document.getElementById("playerTableBody");
 const modal = document.getElementById("modal");
 const closeModal = document.getElementById("closeModal");
@@ -102,9 +101,16 @@ function drawBasket() {
 }
 
 function drawFruit() {
-  ctx.fillStyle = "#ff6347";
+  ctx.fillStyle = fruit.color;
   ctx.beginPath();
-  ctx.arc(fruit.x, fruit.y, fruit.size / 2, 0, Math.PI * 2);
+
+  // Drawing based on fruit type
+  if (fruit.type === "apple" || fruit.type === "grape") {
+    ctx.arc(fruit.x, fruit.y, fruit.size / 2, 0, Math.PI * 2);
+  } else if (fruit.type === "banana") {
+    ctx.fillRect(fruit.x, fruit.y, fruit.size, fruit.size / 2);
+  }
+
   ctx.fill();
   ctx.closePath();
 }
@@ -118,8 +124,22 @@ function drawText(text, x, y, size = "20px", color = "black") {
 function drawHeart(x, y, size) {
   ctx.beginPath();
   ctx.moveTo(x, y + size / 4);
-  ctx.bezierCurveTo(x, y - size / 4, x - size / 2, y - size / 4, x - size / 2, y + size / 4);
-  ctx.bezierCurveTo(x - size / 2, y + (size * 3) / 4, x, y + (size * 3) / 4, x, y + size / 4);
+  ctx.bezierCurveTo(
+    x,
+    y - size / 4,
+    x - size / 2,
+    y - size / 4,
+    x - size / 2,
+    y + size / 4
+  );
+  ctx.bezierCurveTo(
+    x - size / 2,
+    y + (size * 3) / 4,
+    x,
+    y + (size * 3) / 4,
+    x,
+    y + size / 4
+  );
   ctx.fillStyle = "red";
   ctx.fill();
   ctx.closePath();
@@ -149,8 +169,20 @@ function update() {
   drawFruit();
 
   if (gameOver) {
-    drawText("Game Over", canvas.width / 2 - 150, canvas.height / 2, "50px", "red");
-    drawText("Press Spacebar...", canvas.width / 2 - 150, canvas.height / 2 + 50, "20px", "black");
+    drawText(
+      "Game Over",
+      canvas.width / 2 - 150,
+      canvas.height / 2,
+      "50px",
+      "red"
+    );
+    drawText(
+      "Press Spacebar...",
+      canvas.width / 2 - 150,
+      canvas.height / 2 + 50,
+      "20px",
+      "black"
+    );
     savePlayerDetails();
     displayPreviousPlayers();
 
@@ -169,11 +201,15 @@ function update() {
     basket.velocity *= basket.friction;
   }
 
-  basket.velocity = Math.max(-basket.maxSpeed, Math.min(basket.velocity, basket.maxSpeed));
+  basket.velocity = Math.max(
+    -basket.maxSpeed,
+    Math.min(basket.velocity, basket.maxSpeed)
+  );
   basket.x += basket.velocity;
 
   if (basket.x < 0) basket.x = 0;
-  if (basket.x + basket.width > canvas.width) basket.x = canvas.width - basket.width;
+  if (basket.x + basket.width > canvas.width)
+    basket.x = canvas.width - basket.width;
 
   fruit.y += fruit.speed;
 
@@ -182,7 +218,7 @@ function update() {
     fruit.x > basket.x &&
     fruit.x < basket.x + basket.width
   ) {
-    score++;
+    score += fruit.score; // Add score based on fruit type
     resetFruit();
   } else if (fruit.y + fruit.size > canvas.height) {
     score--;
@@ -197,10 +233,18 @@ function update() {
   requestAnimationFrame(update);
 }
 
+function getRandomFruit() {
+  const randomIndex = Math.floor(Math.random() * fruitTypes.length);
+  return {
+    ...fruitTypes[randomIndex],
+    x: Math.random() * (canvas.width - 40),
+    y: 0,
+    speed: 3 + Math.random() * 5,
+  };
+}
+
 function resetFruit() {
-  fruit.x = Math.random() * (canvas.width - fruit.size);
-  fruit.y = 0;
-  fruit.speed = 3 + Math.random() * 5;
+  fruit = getRandomFruit(); // Get a new random fruit
 }
 
 function moveBasket(e) {
@@ -220,17 +264,21 @@ function stopBasket(e) {
 }
 
 function handleSpacebar(e) {
-  if (e) e.preventDefault(); // Prevent default spacebar action
-  console.log(e);
-  if (e.srcElement === playerIdInput || e.srcElement === playerNameInput) {
-    e.srcElement.value = e.srcElement.value + " "
-    return; // Do nothing if the focus is on an input field
-  }
-  
-  if (!gameRunning && !gameOver) {
-    promptForUserDetails();
-  } else if (gameRunning) {
-    gameRunning = false; // Pause the game
+  if (e.key === " ") {
+    if (e.target == playerIdInput || e.target == playerNameInput) {
+    //   e.target.value = e.target.value + " ";
+      return;
+    }
+    e.preventDefault(); // Prevent default spacebar action
+
+    if (!gameRunning && !gameOver) {
+      promptForUserDetails();
+    } else if (gameRunning) {
+      gameRunning = false; // Pause the game
+    } else if (gameOver) {
+      resetGame();
+      promptForUserDetails();
+    }
   }
 }
 
@@ -243,7 +291,9 @@ function savePlayerDetails() {
     };
 
     let players = JSON.parse(localStorage.getItem("players")) || [];
-    const existingPlayerIndex = players.findIndex((player) => player.id === playerId);
+    const existingPlayerIndex = players.findIndex(
+      (player) => player.id === playerId
+    );
 
     if (existingPlayerIndex >= 0) {
       if (players[existingPlayerIndex].score < score) {
@@ -277,29 +327,36 @@ function resetGame() {
   score = 0;
   lives = 5;
   gameOver = false;
-  fruit.x = Math.random() * (canvas.width - fruit.size);
-  fruit.y = 0;
-  fruit.speed = 3;
+  fruit = getRandomFruit(); // Reset with a new random fruit
   gameRunning = false;
   playerId = "";
   playerName = "";
   displayPreviousPlayers();
 }
 
-document.addEventListener("keydown", (e) => {
-  if (e.key === " ") {
-    handleSpacebar(e);
-  } else {
-    moveBasket(e);
-  }
-});
+function initialize() {
+  document.addEventListener("keydown", (e) => {
+    if (e.key === " ") {
+      handleSpacebar(e);
+    } else {
+      moveBasket(e);
+    }
+  });
 
-document.addEventListener("keyup", stopBasket);
-closeModal.addEventListener("click", hideModal);
+  document.addEventListener("keyup", stopBasket);
+  closeModal.addEventListener("click", hideModal);
 
-// Initial screen before the game starts
-ctx.clearRect(0, 0, canvas.width, canvas.height);
-drawBasket();
-drawFruit();
-drawText("Press Space to Start", canvas.width / 2 - 150, canvas.height / 2, "30px", "black");
-displayPreviousPlayers();
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawBasket();
+  drawFruit();
+  drawText(
+    "Press Space to Start",
+    canvas.width / 2 - 150,
+    canvas.height / 2,
+    "30px",
+    "black"
+  );
+  displayPreviousPlayers();
+}
+
+initialize();
