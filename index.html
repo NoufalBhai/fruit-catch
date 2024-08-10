@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catch the Falling Objects Game</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas"></canvas>
+        <div id="playerDetails">
+            <h3>Previous Players</h3>
+            <table id="playerTable">
+                <thead>
+                    <tr>
+                        <th>Player ID</th>
+                        <th>Name</th>
+                        <th>Score</th>
+                    </tr>
+                </thead>
+                <tbody id="playerTableBody">
+                    <!-- Player details will be inserted here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal for user details -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <button class="close-button" id="closeModal" aria-label="Close">&times;</button>
+            <h2 id="modalTitle">Enter Your Details</h2>
+            <form id="userDetailsForm">
+                <label for="playerId">Player ID:</label>
+                <input type="text" id="playerId" name="playerId" required aria-required="true">
+                <br>
+                <label for="playerName">Name:</label>
+                <input type="text" id="playerName" name="playerName" required aria-required="true">
+                <br>
+                <button type="submit">Start Game</button>
+            </form>
+            <div id="error-message" class="error-message"></div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
