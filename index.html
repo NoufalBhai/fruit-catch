@@ -1,49 +1,61 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Catch the Falling Objects Game</title>
-    <link rel="stylesheet" href="styles.css">
-</head>
-<body>
-    <div id="gameContainer">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fruit Catcher Game</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div id="container">
+      <div id="leftPanel">
+        <h2>Fruit Info</h2>
+        <table id="fruitInfoTable">
+          <thead>
+            <tr>
+              <th>Fruit</th>
+              <th>Score</th>
+            </tr>
+          </thead>
+          <tbody id="fruitInfoBody"></tbody>
+        </table>
+      </div>
+
+      <div id="gameArea">
         <canvas id="gameCanvas"></canvas>
-        <div id="playerDetails">
-            <h3>Previous Players</h3>
-            <table id="playerTable">
-                <thead>
-                    <tr>
-                        <th>Player ID</th>
-                        <th>Name</th>
-                        <th>Score</th>
-                    </tr>
-                </thead>
-                <tbody id="playerTableBody">
-                    <!-- Player details will be inserted here -->
-                </tbody>
-            </table>
-        </div>
+      </div>
+
+      <div id="rightPanel">
+        <h2>Previous Players</h2>
+        <table id="playerTable">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Name</th>
+              <th>Score</th>
+            </tr>
+          </thead>
+          <tbody id="playerTableBody"></tbody>
+        </table>
+      </div>
     </div>
 
-    <!-- Modal for user details -->
-    <div id="modal" class="modal">
-        <div class="modal-content">
-            <button class="close-button" id="closeModal" aria-label="Close">&times;</button>
-            <h2 id="modalTitle">Enter Your Details</h2>
-            <form id="userDetailsForm">
-                <label for="playerId">Player ID:</label>
-                <input type="text" id="playerId" name="playerId" required aria-required="true">
-                <br>
-                <label for="playerName">Name:</label>
-                <input type="text" id="playerName" name="playerName" required aria-required="true">
-                <br>
-                <button type="submit">Start Game</button>
-            </form>
-            <div id="error-message" class="error-message"></div>
-        </div>
+    <!-- Modal for User Details -->
+    <div id="modal">
+      <div id="modalContent">
+        <h2>Enter Your Details</h2>
+        <form id="userDetailsForm">
+          <label for="playerId">Player ID:</label>
+          <input type="text" id="playerId" required />
+          <label for="playerName">Player Name:</label>
+          <input type="text" id="playerName" required />
+          <button type="submit">Submit</button>
+          <span id="error-message"></span>
+        </form>
+        <button id="closeModal">Close</button>
+      </div>
     </div>
 
     <script src="script.js"></script>
-</body>
+  </body>
 </html>
