@@ -312,13 +312,6 @@ function handleKeyDown(e) {
     isMovingLeft = true;
   } else if (e.key === " ") {
     handleSpacebar(e);
-    // if (gameOver) {
-    //   resetGame();
-    //   promptForUserDetails();
-    // } else if (gameRunning) {
-    //   gamePaused = !gamePaused;
-    //   if (!gamePaused) update();
-    // }
   }
 }
 
@@ -392,7 +385,9 @@ function savePlayerDetails() {
       (player) => player.id === playerId
     );
     if (existingPlayerIndex !== -1) {
-      players[existingPlayerIndex].score = score;
+      if (score > players[existingPlayerIndex].score) {
+        players[existingPlayerIndex].score = score;
+      }
     } else {
       players.push({ id: playerId, name: playerName, score: score });
     }
@@ -402,6 +397,7 @@ function savePlayerDetails() {
 
 function displayPreviousPlayers() {
   const players = JSON.parse(localStorage.getItem("players")) || [];
+  players.sort((a, b) => b.score - a.score);
   playerTableBody.innerHTML = "";
   players.forEach((player) => {
     const row = document.createElement("tr");
@@ -444,11 +440,26 @@ function populateFruitInfoTable() {
   });
 }
 
+// Add event listener to track mouse movement
+canvas.addEventListener("mousemove", (event) => {
+  const rect = canvas.getBoundingClientRect();
+  const mouseX = event.clientX - rect.left;
+
+  // Update the basket's position
+  basket.x = mouseX - basket.width / 2;
+
+  // Ensure the basket doesn't go out of bounds
+  if (basket.x < 0) {
+    basket.x = 0;
+  } else if (basket.x + basket.width > canvas.width) {
+    basket.x = canvas.width - basket.width;
+  }
+});
+
 document.addEventListener("keydown", handleKeyDown);
 document.addEventListener("keyup", handleKeyUp);
 
 displayPreviousPlayers();
-// populateFruitInfoTable();
 
 loadFruitImages().then(() => {
   resetGame();
