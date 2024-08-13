@@ -16,10 +16,14 @@ let basket = {
 };
 
 const fruitImages = {};
+const heartImages = {};
 const fruitTypes = [
   { type: "apple", size: 40, score: 1 },
+  { type: "bomb", size: 50, score: -5 },
   { type: "banana", size: 50, score: 2 },
-  { type: "grape", size: 60, score: 3 },
+  { type: "tnt", size: 50, score: -2 },
+  { type: "grape", size: 60, score: 2 },
+  { type: "pineapple", size: 60, score: 3 },
 ];
 const fruits = [];
 const maxFruits = 3; // Maximum number of fruits on the screen at the same time
@@ -36,6 +40,7 @@ let playerId = "";
 let playerName = "";
 
 const playerTableBody = document.getElementById("playerTableBody");
+const fruitTableBody = document.getElementById("fruitTableBody"); // Fruit info table body
 const modal = document.getElementById("modal");
 const closeModal = document.getElementById("closeModal");
 const userDetailsForm = document.getElementById("userDetailsForm");
@@ -52,9 +57,14 @@ function loadImage(src) {
 }
 
 async function loadFruitImages() {
-  fruitImages.apple = await loadImage("apple.png");
-  fruitImages.banana = await loadImage("banana.png");
-  fruitImages.grape = await loadImage("grape.png");
+  fruitImages.apple = await loadImage("./images/apple.png");
+  fruitImages.banana = await loadImage("./images/banana.png");
+  fruitImages.grape = await loadImage("./images/grape.png");
+  heartImages.filled = await loadImage("./images/heart.png"); // Load filled heart image
+  heartImages.empty = await loadImage("./images/empty_heart.png"); // Load empty heart image
+  fruitImages.bomb = await loadImage("./images/bomb.png");
+  fruitImages.tnt = await loadImage("./images/tnt.png");
+  fruitImages.pineapple = await loadImage("./images/pineapple.png")
 }
 
 function showModal() {
@@ -139,52 +149,17 @@ function drawText(text, x, y, size = "20px", color = "black") {
 }
 
 function drawHeart(x, y, size) {
-  ctx.beginPath();
-  ctx.moveTo(x, y + size / 4);
-  ctx.bezierCurveTo(
-    x,
-    y - size / 4,
-    x - size / 2,
-    y - size / 4,
-    x - size / 2,
-    y + size / 4
-  );
-  ctx.bezierCurveTo(
-    x - size / 2,
-    y + (size * 3) / 4,
-    x,
-    y + (size * 3) / 4,
-    x,
-    y + size / 4
-  );
-  ctx.fillStyle = "red";
-  ctx.fill();
-  ctx.closePath();
+  const heartImage = heartImages.filled;
+  if (heartImage) {
+    ctx.drawImage(heartImage, x, y, size, size);
+  }
 }
 
 function drawEmptyHeart(x, y, size) {
-  ctx.beginPath();
-  ctx.moveTo(x, y + size / 4);
-  ctx.bezierCurveTo(
-    x,
-    y - size / 4,
-    x - size / 2,
-    y - size / 4,
-    x - size / 2,
-    y + size / 4
-  );
-  ctx.bezierCurveTo(
-    x - size / 2,
-    y + (size * 3) / 4,
-    x,
-    y + (size * 3) / 4,
-    x,
-    y + size / 4
-  );
-  ctx.strokeStyle = "red";
-  ctx.lineWidth = 1;
-  ctx.stroke();
-  ctx.closePath();
+  const emptyHeartImage = heartImages.empty;
+  if (emptyHeartImage) {
+    ctx.drawImage(emptyHeartImage, x, y, size, size);
+  }
 }
 
 function drawScoreboard() {
@@ -208,6 +183,43 @@ function drawScoreboard() {
       );
     }
   }
+}
+
+// Function to populate the fruit info table
+function populateFruitInfoTable() {
+  fruitTableBody.innerHTML = "";
+
+  fruitTypes.forEach((fruit) => {
+    const row = document.createElement("tr");
+    // Fruit Image
+    const fruitImage = fruitImages[fruit.type];
+    const imgCell = document.createElement("td");
+    const img = document.createElement("img");
+    img.src = fruitImage.src; // Ensure this path is correct
+    img.alt = fruit.type;
+    img.width = 50; // Set the desired width for the image
+    img.height = 50; // Set the desired height for the image
+    imgCell.appendChild(img);
+    row.appendChild(imgCell);
+
+    // const sizeCell = document.createElement("td");
+    // sizeCell.textContent = fruit.size;
+    // row.appendChild(sizeCell);
+
+    const scoreCell = document.createElement("td");
+    scoreCell.textContent = fruit.score;
+    row.appendChild(scoreCell);
+
+    fruitTableBody.appendChild(row);
+  });
+  const row = document.createElement("tr");
+  const textCell = document.createElement("td");
+  textCell.textContent = "Miss";
+  row.appendChild(textCell);
+  const scoreCell = document.createElement("td");
+  scoreCell.textContent = "-1";
+  row.appendChild(scoreCell);
+  fruitTableBody.appendChild(row);
 }
 
 function update() {
@@ -239,21 +251,12 @@ function update() {
 
     setTimeout(() => {
       resetGame();
-      //   promptForUserDetails();
     }, 2000);
     return;
   }
 
   if (!gamePaused) {
-    // Update basket movement
-    if (isMovingRight) {
-      basket.velocity += basket.acceleration;
-    } else if (isMovingLeft) {
-      basket.velocity -= basket.acceleration;
-    } else {
-      basket.velocity *= basket.friction;
-    }
-
+    basket.velocity *= basket.friction;
     basket.velocity = Math.max(
       -basket.maxSpeed,
       Math.min(basket.velocity, basket.maxSpeed)
@@ -264,9 +267,12 @@ function update() {
     if (basket.x + basket.width > canvas.width)
       basket.x = canvas.width - basket.width;
 
-    // Update fruit positions
     fruits.forEach((fruit, index) => {
-      fruit.y += fruit.speed;
+      if (fruit.score < 0) {
+        fruit.y += 2 * fruit.speed;
+      } else {
+        fruit.y += fruit.speed;
+      }
 
       if (
         fruit.y + fruit.size > basket.y &&
@@ -278,8 +284,13 @@ function update() {
         if (fruits.length < maxFruits) {
           fruits.push(createRandomFruit());
         }
+        if (fruit.score < 0) {
+          lives--;
+        }
       } else if (fruit.y + fruit.size > canvas.height) {
-        lives--;
+        if(fruit.score > 0){
+            score--;
+        }
         fruits.splice(index, 1);
         if (fruits.length < maxFruits) {
           fruits.push(createRandomFruit());
@@ -299,7 +310,7 @@ function createRandomFruit() {
   const randomIndex = Math.floor(Math.random() * fruitTypes.length);
   return {
     ...fruitTypes[randomIndex],
-    x: Math.random() * (canvas.width - 60), // Adjusted for size of fruit
+    x: Math.random() * (canvas.width - 60),
     y: 0,
     speed: 3 + Math.random() * 2,
   };
@@ -325,14 +336,15 @@ function handleKeyUp(e) {
 
 function resetGame() {
   fruits.length = 0;
-  for (let i = 0; i < maxFruits; i++) {
-    fruits.push(createRandomFruit());
-  }
   score = 0;
   lives = 5;
   gameOver = false;
-  gameRunning = false;
   gamePaused = false;
+
+  for (let i = 0; i < maxFruits; i++) {
+    fruits.push(createRandomFruit());
+  }
+
   basket = {
     x: canvas.width / 2 - 50,
     y: canvas.height - 50,
@@ -343,127 +355,86 @@ function resetGame() {
     acceleration: 1,
     friction: 0.9,
   };
-}
 
-function handleSpacebar(e) {
-  const focusedElement = document.activeElement;
-  if (
-    focusedElement.tagName === "INPUT" ||
-    focusedElement.tagName === "TEXTAREA"
-  ) {
-    return;
-  }
+  populateFruitInfoTable(); // Populate the fruit info table
 
-  e.preventDefault();
-  if (gamePaused) {
-    gamePaused = false;
-    gameRunning = true;
-    update(); // Continue the game
-  } else if (!gameRunning && !gameOver) {
-    promptForUserDetails();
-  } else if (gameRunning) {
-    gameRunning = false; // Pause the game
-    gamePaused = true;
-    // ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear canvas before redrawing
-    drawText(
-      "Game Paused",
-      canvas.width / 2 - 150,
-      canvas.height / 2,
-      "50px",
-      "green"
-    );
-  } else if (gameOver) {
-    resetGame();
-    promptForUserDetails();
-  }
+  promptForUserDetails();
 }
 
 function savePlayerDetails() {
-  if (playerId && playerName) {
-    const players = JSON.parse(localStorage.getItem("players")) || [];
-    const existingPlayerIndex = players.findIndex(
-      (player) => player.id === playerId
-    );
-    if (existingPlayerIndex !== -1) {
-      if (score > players[existingPlayerIndex].score) {
-        players[existingPlayerIndex].score = score;
-      }
-    } else {
-      players.push({ id: playerId, name: playerName, score: score });
+  const players = JSON.parse(localStorage.getItem("players")) || [];
+
+  const playerIndex = players.findIndex((player) => player.id === playerId);
+  if (playerIndex !== -1) {
+    // Update existing player
+    players[playerIndex].name = playerName;
+    if (score > players[playerIndex].score) {
+      players[playerIndex].score = score;
     }
-    localStorage.setItem("players", JSON.stringify(players));
+  } else {
+    // Add new player
+    players.push({ id: playerId, name: playerName, score });
   }
+
+  localStorage.setItem("players", JSON.stringify(players));
 }
 
 function displayPreviousPlayers() {
+  playerTableBody.innerHTML = "";
   const players = JSON.parse(localStorage.getItem("players")) || [];
   players.sort((a, b) => b.score - a.score);
-  playerTableBody.innerHTML = "";
   players.forEach((player) => {
     const row = document.createElement("tr");
-    row.innerHTML = `
-      <td>${player.id}</td>
-      <td>${player.name}</td>
-      <td>${player.score}</td>
-    `;
+    const idCell = document.createElement("td");
+    const nameCell = document.createElement("td");
+    const scoreCell = document.createElement("td");
+
+    idCell.textContent = player.id;
+    nameCell.textContent = player.name;
+    scoreCell.textContent = player.score;
+
+    row.appendChild(idCell);
+    row.appendChild(nameCell);
+    row.appendChild(scoreCell);
+
     playerTableBody.appendChild(row);
   });
 }
 
-function populateFruitInfoTable() {
-  const fruitInfoBody = document.getElementById("fruitInfoBody");
-  fruitInfoBody.innerHTML = ""; // Clear existing content
-
-  fruitTypes.forEach((fruit) => {
-    const tr = document.createElement("tr");
-    const fruitImage = fruitImages[fruit.type];
-
-    // Create a td for the image
-    const imgTd = document.createElement("td");
-    const img = document.createElement("img");
-    img.src = fruitImage.src;
-    img.alt = fruit.type;
-    img.width = fruit.size;
-    img.height = fruit.size;
-    imgTd.appendChild(img);
-
-    // Create a td for the score
-    const scoreTd = document.createElement("td");
-    scoreTd.textContent = fruit.score;
-
-    // Append the tds to the tr
-    tr.appendChild(imgTd);
-    tr.appendChild(scoreTd);
-
-    // Append the tr to the table body
-    fruitInfoBody.appendChild(tr);
-  });
+function handleSpacebar(e) {
+  if (e.key === " ") {
+    if (!gameRunning) {
+      gameRunning = true;
+      update();
+    } else if (gameOver) {
+      resetGame();
+    } else {
+      gamePaused = !gamePaused;
+      if (!gamePaused) {
+        update();
+      }
+    }
+  }
 }
 
-// Add event listener to track mouse movement
-canvas.addEventListener("mousemove", (event) => {
+function handleMouseMove(e) {
   const rect = canvas.getBoundingClientRect();
-  const mouseX = event.clientX - rect.left;
+  const mouseX = e.clientX - rect.left;
 
-  // Update the basket's position
   basket.x = mouseX - basket.width / 2;
 
-  // Ensure the basket doesn't go out of bounds
-  if (basket.x < 0) {
-    basket.x = 0;
-  } else if (basket.x + basket.width > canvas.width) {
+  if (basket.x < 0) basket.x = 0;
+  if (basket.x + basket.width > canvas.width)
     basket.x = canvas.width - basket.width;
-  }
-});
+}
 
 document.addEventListener("keydown", handleKeyDown);
 document.addEventListener("keyup", handleKeyUp);
-
-displayPreviousPlayers();
+canvas.addEventListener("mousemove", handleMouseMove);
 
 loadFruitImages().then(() => {
   resetGame();
-  displayPreviousPlayers();
-  promptForUserDetails();
   populateFruitInfoTable();
+  displayPreviousPlayers();
+  drawScoreboard();
 });
