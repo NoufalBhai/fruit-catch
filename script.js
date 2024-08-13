@@ -64,7 +64,7 @@ async function loadFruitImages() {
   heartImages.empty = await loadImage("./images/empty_heart.png"); // Load empty heart image
   fruitImages.bomb = await loadImage("./images/bomb.png");
   fruitImages.tnt = await loadImage("./images/tnt.png");
-  fruitImages.pineapple = await loadImage("./images/pineapple.png")
+  fruitImages.pineapple = await loadImage("./images/pineapple.png");
 }
 
 function showModal() {
@@ -288,8 +288,8 @@ function update() {
           lives--;
         }
       } else if (fruit.y + fruit.size > canvas.height) {
-        if(fruit.score > 0){
-            score--;
+        if (fruit.score > 0) {
+          score--;
         }
         fruits.splice(index, 1);
         if (fruits.length < maxFruits) {
@@ -401,19 +401,52 @@ function displayPreviousPlayers() {
   });
 }
 
+// function handleSpacebar(e) {
+//   if (e.key === " ") {
+//     if (!gameRunning) {
+//       gameRunning = true;
+//       update();
+//     } else if (gameOver) {
+//       resetGame();
+//     } else {
+//       gamePaused = !gamePaused;
+//       if (!gamePaused) {
+//         update();
+//       }
+//     }
+//   }
+// }
+
 function handleSpacebar(e) {
-  if (e.key === " ") {
-    if (!gameRunning) {
-      gameRunning = true;
-      update();
-    } else if (gameOver) {
-      resetGame();
-    } else {
-      gamePaused = !gamePaused;
-      if (!gamePaused) {
-        update();
-      }
-    }
+  const focusedElement = document.activeElement;
+  if (
+    focusedElement.tagName === "INPUT" ||
+    focusedElement.tagName === "TEXTAREA"
+  ) {
+    return;
+  }
+
+  e.preventDefault();
+  if (gamePaused) {
+    gamePaused = false;
+    gameRunning = true;
+    update(); // Continue the game
+  } else if (!gameRunning && !gameOver) {
+    promptForUserDetails();
+  } else if (gameRunning) {
+    gameRunning = false; // Pause the game
+    gamePaused = true;
+    // ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear canvas before redrawing
+    drawText(
+      "Game Paused",
+      canvas.width / 2 - 150,
+      canvas.height / 2,
+      "50px",
+      "green"
+    );
+  } else if (gameOver) {
+    resetGame();
+    promptForUserDetails();
   }
 }
 
